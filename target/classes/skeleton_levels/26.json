@@ -1,0 +1,32 @@
+{
+  "data": [
+    {
+      "numbers": [
+        "D",
+        "F",
+        "H"
+      ],
+      "indicator": {
+        "correct_in_place": 1,
+        "correct_not_in_place": 2
+      }
+    },
+    {
+      "numbers": [
+        "F",
+        "G",
+        "J"
+      ],
+      "indicator": {
+        "correct_in_place": 1,
+        "correct_not_in_place": 0
+      }
+    }
+  ],
+  "password": [
+    "F",
+    "D",
+    "H"
+  ],
+  "numbers_each_row": 3
+}

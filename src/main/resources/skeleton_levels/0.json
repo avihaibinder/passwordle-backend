@@ -1,0 +1,43 @@
+{
+  "data": [
+    {
+      "numbers": [
+        "F",
+        "H",
+        "J"
+      ],
+      "indicator": {
+        "correct_in_place": 1,
+        "correct_not_in_place": 0
+      }
+    },
+    {
+      "numbers": [
+        "B",
+        "G",
+        "D"
+      ],
+      "indicator": {
+        "correct_in_place": 2,
+        "correct_not_in_place": 0
+      }
+    },
+    {
+      "numbers": [
+        "H",
+        "B",
+        "J"
+      ],
+      "indicator": {
+        "correct_in_place": 0,
+        "correct_not_in_place": 0
+      }
+    }
+  ],
+  "password": [
+    "F",
+    "G",
+    "D"
+  ],
+  "numbers_each_row": 3
+}

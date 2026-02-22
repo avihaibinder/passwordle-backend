@@ -1,0 +1,54 @@
+{
+  "data": [
+    {
+      "numbers": [
+        "D",
+        "F",
+        "E"
+      ],
+      "indicator": {
+        "correct_in_place": 0,
+        "correct_not_in_place": 0
+      }
+    },
+    {
+      "numbers": [
+        "C",
+        "H",
+        "J"
+      ],
+      "indicator": {
+        "correct_in_place": 0,
+        "correct_not_in_place": 0
+      }
+    },
+    {
+      "numbers": [
+        "H",
+        "E",
+        "B"
+      ],
+      "indicator": {
+        "correct_in_place": 0,
+        "correct_not_in_place": 1
+      }
+    },
+    {
+      "numbers": [
+        "D",
+        "G",
+        "I"
+      ],
+      "indicator": {
+        "correct_in_place": 2,
+        "correct_not_in_place": 0
+      }
+    }
+  ],
+  "password": [
+    "B",
+    "G",
+    "I"
+  ],
+  "numbers_each_row": 3
+}
