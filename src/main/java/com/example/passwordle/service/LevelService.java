@@ -48,12 +48,18 @@ public class LevelService {
     }
 
     public DailyLevelResponse getDailyLevel(DailyLevelRequest request) {
+        DailyLevelResponse response = dailyLevelCache.get(request.getDate());
+        if (response == null) {
+            throw new LevelNotFoundException("Daily level for " + request.getDate() + " not found!");
+        }
+        return response;
+    }
+
+    public DailyLevelResponse createDailyLevel(DailyLevelRequest request) {
         return dailyLevelCache.computeIfAbsent(request.getDate(), this::generateNewDailyLevel);
     }
 
     private DailyLevelResponse generateNewDailyLevel(LocalDate date) {
-        // Generate a random number from 0 to 49 (since we have 0.json up to 50.json
-        // currently)
         int randomSkeletonId = ThreadLocalRandom.current().nextInt(50);
 
         SkeletonLevel skeletonLevel = getSkeletonLevel(randomSkeletonId);
