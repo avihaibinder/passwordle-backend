@@ -19,7 +19,10 @@ public class DailyLevelController {
     private final LevelService levelService;
 
     @GetMapping
-    public ResponseEntity<?> getDailyLevel(@RequestBody DailyLevelRequest request) {
+    public ResponseEntity<?> getDailyLevel(@RequestBody(required = false) DailyLevelRequest request) {
+        if (request == null) {
+            request = new DailyLevelRequest();
+        }
         try {
             return ResponseEntity.ok(levelService.getDailyLevel(request));
         } catch (Throwable t) {
