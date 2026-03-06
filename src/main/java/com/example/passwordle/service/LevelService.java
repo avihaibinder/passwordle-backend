@@ -52,6 +52,15 @@ public class LevelService {
     }
 
     public DailyLevelResponse getDailyLevel(DailyLevelRequest request) {
+        if (request.getDate() == null) {
+            LocalDate currentDate = LocalDate.now();
+            if (!dailyLevelCache.containsKey(currentDate)) {
+                DailyLevelRequest newRequest = new DailyLevelRequest();
+                newRequest.setDate(currentDate);
+                return createDailyLevel(newRequest);
+            }
+        }
+
         LocalDate date = resolveDate(request);
         DailyLevelResponse response = dailyLevelCache.get(date);
         if (response == null) {
@@ -74,7 +83,7 @@ public class LevelService {
         // Use the date itself as the ID for the daily level response
         String dailyId = date != null ? date.toString() : "unknown-date";
 
-        levelResultCache.putIfAbsent(date, new LevelResult(dailyId, date, 0, 0));
+        levelResultCache.putIfAbsent(date, new LevelResult(dailyId, date));
 
         return new DailyLevelResponse(dailyId, level);
     }
@@ -83,14 +92,17 @@ public class LevelService {
         LevelResult levelResult = levelResultCache.get(request.getDate());
         if (levelResult != null) {
             if ("success".equalsIgnoreCase(request.getResult())) {
-                levelResult.setSuccessCounter(levelResult.getSuccessCounter() + 1);
+                levelResult.incrementSuccess();
             } else if ("failure".equalsIgnoreCase(request.getResult())) {
-                levelResult.setFailCounter(levelResult.getFailCounter() + 1);
+                levelResult.incrementFailure();
             }
         } else {
-            LevelResult newRes = new LevelResult(request.getId(), request.getDate(),
-                    "success".equalsIgnoreCase(request.getResult()) ? 1 : 0,
-                    "failure".equalsIgnoreCase(request.getResult()) ? 1 : 0);
+            LevelResult newRes = new LevelResult(request.getId(), request.getDate());
+            if ("success".equalsIgnoreCase(request.getResult())) {
+                newRes.incrementSuccess();
+            } else if ("failure".equalsIgnoreCase(request.getResult())) {
+                newRes.incrementFailure();
+            }
             levelResultCache.put(request.getDate(), newRes);
         }
     }
