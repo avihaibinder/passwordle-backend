@@ -4,7 +4,10 @@ import com.example.passwordle.dto.DailyLevelRequest;
 import com.example.passwordle.dto.DailyLevelResponse;
 import com.example.passwordle.exception.LevelNotFoundException;
 import com.example.passwordle.model.Level;
+import com.example.passwordle.model.LevelResult;
 import com.example.passwordle.model.SkeletonLevel;
+import com.example.passwordle.dto.DailyLevelResultRequest;
+import com.example.passwordle.dto.DailyLevelMetadataResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
@@ -23,6 +26,7 @@ public class LevelService {
     private final ResourceLoader resourceLoader;
     private final Map<Integer, SkeletonLevel> skeletonLevelCache = new ConcurrentHashMap<>();
     private final Map<LocalDate, DailyLevelResponse> dailyLevelCache = new ConcurrentHashMap<>();
+    private final Map<LocalDate, LevelResult> levelResultCache = new ConcurrentHashMap<>();
 
     public LevelService(ObjectMapper objectMapper, ResourceLoader resourceLoader) {
         this.objectMapper = objectMapper;
@@ -48,15 +52,17 @@ public class LevelService {
     }
 
     public DailyLevelResponse getDailyLevel(DailyLevelRequest request) {
-        DailyLevelResponse response = dailyLevelCache.get(request.getDate());
+        LocalDate date = resolveDate(request);
+        DailyLevelResponse response = dailyLevelCache.get(date);
         if (response == null) {
-            throw new LevelNotFoundException("Daily level for " + request.getDate() + " not found!");
+            throw new LevelNotFoundException("Daily level for " + date + " not found!");
         }
         return response;
     }
 
     public DailyLevelResponse createDailyLevel(DailyLevelRequest request) {
-        return dailyLevelCache.computeIfAbsent(request.getDate(), this::generateNewDailyLevel);
+        LocalDate date = resolveDate(request);
+        return dailyLevelCache.computeIfAbsent(date, this::generateNewDailyLevel);
     }
 
     private DailyLevelResponse generateNewDailyLevel(LocalDate date) {
@@ -68,6 +74,49 @@ public class LevelService {
         // Use the date itself as the ID for the daily level response
         String dailyId = date != null ? date.toString() : "unknown-date";
 
+        levelResultCache.putIfAbsent(date, new LevelResult(dailyId, date, 0, 0));
+
         return new DailyLevelResponse(dailyId, level);
+    }
+
+    public void postDailyLevelResult(DailyLevelResultRequest request) {
+        LevelResult levelResult = levelResultCache.get(request.getDate());
+        if (levelResult != null) {
+            if ("success".equalsIgnoreCase(request.getResult())) {
+                levelResult.setSuccessCounter(levelResult.getSuccessCounter() + 1);
+            } else if ("failure".equalsIgnoreCase(request.getResult())) {
+                levelResult.setFailCounter(levelResult.getFailCounter() + 1);
+            }
+        } else {
+            LevelResult newRes = new LevelResult(request.getId(), request.getDate(),
+                    "success".equalsIgnoreCase(request.getResult()) ? 1 : 0,
+                    "failure".equalsIgnoreCase(request.getResult()) ? 1 : 0);
+            levelResultCache.put(request.getDate(), newRes);
+        }
+    }
+
+    public DailyLevelMetadataResponse getDailyLevelMetadata(DailyLevelRequest request) {
+        LocalDate date = resolveDate(request);
+        LevelResult levelResult = levelResultCache.get(date);
+        if (levelResult == null) {
+            throw new LevelNotFoundException("Daily level metadata for " + date + " not found!");
+        }
+        return new DailyLevelMetadataResponse(levelResult.getId(), levelResult.getDate(),
+                levelResult.getSuccessPercentage());
+    }
+
+    private LocalDate resolveDate(DailyLevelRequest request) {
+        if (request.getDate() != null) {
+            return request.getDate();
+        }
+        if (request.getId() != null) {
+            try {
+                return LocalDate.parse(request.getId());
+            } catch (Exception e) {
+                throw new IllegalArgumentException("Invalid id format. Expected YYYY-MM-DD", e);
+            }
+        }
+        // If neither is provided, default to today's date
+        return LocalDate.now();
     }
 }

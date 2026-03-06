@@ -1,6 +1,7 @@
 package com.example.passwordle.controller;
 
 import com.example.passwordle.dto.DailyLevelRequest;
+import com.example.passwordle.dto.DailyLevelResultRequest;
 import com.example.passwordle.service.LevelService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -30,6 +31,25 @@ public class DailyLevelController {
     public ResponseEntity<?> createDailyLevel(@RequestBody DailyLevelRequest request) {
         try {
             return ResponseEntity.ok(levelService.createDailyLevel(request));
+        } catch (Throwable t) {
+            return ResponseEntity.badRequest().body(t.getMessage());
+        }
+    }
+
+    @GetMapping("/metadata")
+    public ResponseEntity<?> getDailyLevelMetadata(@RequestBody DailyLevelRequest request) {
+        try {
+            return ResponseEntity.ok(levelService.getDailyLevelMetadata(request));
+        } catch (Throwable t) {
+            return ResponseEntity.badRequest().body(t.getMessage());
+        }
+    }
+
+    @PostMapping("/result")
+    public ResponseEntity<?> postDailyLevelResult(@RequestBody DailyLevelResultRequest request) {
+        try {
+            levelService.postDailyLevelResult(request);
+            return ResponseEntity.ok().build();
         } catch (Throwable t) {
             return ResponseEntity.badRequest().body(t.getMessage());
         }

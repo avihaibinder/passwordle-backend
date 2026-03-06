@@ -7,7 +7,6 @@ com\example\passwordle\model\LevelRow.class
 com\example\passwordle\controller\HealthStatus.class
 com\example\passwordle\controller\HealthController.class
 com\example\passwordle\PasswordleBackendApplication.class
-com\example\passwordle\controller\HelloController.class
 com\example\passwordle\dto\DailyLevelResponse.class
 com\example\passwordle\model\SkeletonLevel.class
 com\example\passwordle\dto\DailyLevelRequest.class

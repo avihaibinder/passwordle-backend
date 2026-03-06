@@ -1,12 +1,14 @@
 C:\passwordle-backend\src\main\java\com\example\passwordle\controller\DailyLevelController.java
 C:\passwordle-backend\src\main\java\com\example\passwordle\controller\HealthController.java
 C:\passwordle-backend\src\main\java\com\example\passwordle\controller\HealthStatus.java
-C:\passwordle-backend\src\main\java\com\example\passwordle\controller\HelloController.java
+C:\passwordle-backend\src\main\java\com\example\passwordle\dto\DailyLevelMetadataResponse.java
 C:\passwordle-backend\src\main\java\com\example\passwordle\dto\DailyLevelRequest.java
 C:\passwordle-backend\src\main\java\com\example\passwordle\dto\DailyLevelResponse.java
+C:\passwordle-backend\src\main\java\com\example\passwordle\dto\DailyLevelResultRequest.java
 C:\passwordle-backend\src\main\java\com\example\passwordle\exception\LevelNotFoundException.java
 C:\passwordle-backend\src\main\java\com\example\passwordle\model\Indicator.java
 C:\passwordle-backend\src\main\java\com\example\passwordle\model\Level.java
+C:\passwordle-backend\src\main\java\com\example\passwordle\model\LevelResult.java
 C:\passwordle-backend\src\main\java\com\example\passwordle\model\LevelRow.java
 C:\passwordle-backend\src\main\java\com\example\passwordle\model\SkeletonLevel.java
 C:\passwordle-backend\src\main\java\com\example\passwordle\model\SkeletonLevelRow.java
