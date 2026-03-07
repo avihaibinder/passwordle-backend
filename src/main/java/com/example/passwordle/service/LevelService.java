@@ -144,11 +144,7 @@ public class LevelService {
     public DailyLevelMetadataResponse getDailyLevelMetadata(DailyLevelRequest request) {
         LocalDate date = resolveDate(request);
         log.info("getDailyLevelMetadata for date: {}", date);
-        LevelResult levelResult = levelResultCache.get(date);
-        if (levelResult == null) {
-            log.error("LevelResult not found for date: {}. Cache keys: {}", date, levelResultCache.keySet());
-            throw new LevelNotFoundException("Daily level metadata for " + date + " not found!");
-        }
+        LevelResult levelResult = levelResultCache.getOrDefault(date, new LevelResult());
         float pct = levelResult.getSuccessPercentage();
         log.info("Returning metadata: id={}, date={}, successPercentage={}", levelResult.getId(), levelResult.getDate(),
                 pct);
