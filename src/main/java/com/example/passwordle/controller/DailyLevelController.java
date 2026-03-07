@@ -5,12 +5,16 @@ import com.example.passwordle.dto.DailyLevelResultRequest;
 import com.example.passwordle.service.LevelService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.time.LocalDate;
 
 @Slf4j
 @RestController
@@ -21,15 +25,14 @@ public class DailyLevelController {
     private final LevelService levelService;
 
     @GetMapping
-    public ResponseEntity<?> getDailyLevel(@RequestBody(required = false) DailyLevelRequest request) {
-        log.info("=== GET /daily-level === request: {}", request);
-        if (request == null) {
-            request = new DailyLevelRequest();
-            log.info("Request was null, created empty DailyLevelRequest");
-        }
+    public ResponseEntity<?> getDailyLevel(
+            @RequestParam(required = false) String id,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        DailyLevelRequest request = new DailyLevelRequest(id, date);
+        log.info("=== GET /daily-level === id: {}, date: {}", id, date);
         try {
             Object response = levelService.getDailyLevel(request);
-            log.info("GET /daily-level SUCCESS, response id: {}", response);
+            log.info("GET /daily-level SUCCESS, response: {}", response);
             return ResponseEntity.ok(response);
         } catch (Throwable t) {
             log.error("GET /daily-level ERROR: {}", t.getMessage(), t);
@@ -51,8 +54,11 @@ public class DailyLevelController {
     }
 
     @GetMapping("/metadata")
-    public ResponseEntity<?> getDailyLevelMetadata(@RequestBody DailyLevelRequest request) {
-        log.info("=== GET /daily-level/metadata === request: {}", request);
+    public ResponseEntity<?> getDailyLevelMetadata(
+            @RequestParam(required = false) String id,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        DailyLevelRequest request = new DailyLevelRequest(id, date);
+        log.info("=== GET /daily-level/metadata === id: {}, date: {}", id, date);
         try {
             Object response = levelService.getDailyLevelMetadata(request);
             log.info("GET /daily-level/metadata SUCCESS, response: {}", response);
