@@ -25,13 +25,10 @@ public class DailyLevelController {
     private final LevelService levelService;
 
     @GetMapping
-    public ResponseEntity<?> getDailyLevel(
-            @RequestParam(required = false) String id,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        DailyLevelRequest request = new DailyLevelRequest(id, date);
-        log.info("=== GET /daily-level === id: {}, date: {}", id, date);
+    public ResponseEntity<?> getDailyLevel() {
+        log.info("=== GET /daily-level ===");
         try {
-            Object response = levelService.getDailyLevel(request);
+            Object response = levelService.getDailyLevel();
             log.info("GET /daily-level SUCCESS, response: {}", response);
             return ResponseEntity.ok(response);
         } catch (Throwable t) {

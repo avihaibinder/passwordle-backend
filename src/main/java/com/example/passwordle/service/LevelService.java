@@ -60,34 +60,26 @@ public class LevelService {
         }
     }
 
-    public DailyLevelResponse getDailyLevel(DailyLevelRequest request) {
-        log.info("getDailyLevel called with request: id={}, date={}", request.getId(), request.getDate());
+    public DailyLevelResponse getDailyLevel() {
+        LocalDate today = LocalDate.now();
+        log.info("getDailyLevel called, today: {}, cache contains key: {}", today, dailyLevelCache.containsKey(today));
 
-        if (request.getDate() == null) {
-            LocalDate currentDate = LocalDate.now();
-            log.info("Date is null, using currentDate: {}, cache contains key: {}", currentDate,
-                    dailyLevelCache.containsKey(currentDate));
-            if (!dailyLevelCache.containsKey(currentDate)) {
-                DailyLevelRequest newRequest = new DailyLevelRequest();
-                newRequest.setDate(currentDate);
-                log.info("Creating new daily level for currentDate: {}", currentDate);
-                return createDailyLevel(newRequest);
-            }
-        }
-
-        LocalDate date = resolveDate(request);
-        log.info("Resolved date: {}", date);
-        DailyLevelResponse response = dailyLevelCache.get(date);
+        DailyLevelResponse response = dailyLevelCache.get(today);
         if (response == null) {
-            log.error("Daily level not found in cache for date: {}. Cache keys: {}", date, dailyLevelCache.keySet());
-            throw new LevelNotFoundException("Daily level for " + date + " not found!");
+            log.info("No daily level in cache for today ({}), creating one", today);
+            return createDailyLevel(today);
         }
-        log.info("Returning daily level for date: {}, id: {}", date, response.getId());
+
+        log.info("Returning cached daily level for today: {}, id: {}", today, response.getId());
         return response;
     }
 
     public DailyLevelResponse createDailyLevel(DailyLevelRequest request) {
         LocalDate date = resolveDate(request);
+        return createDailyLevel(date);
+    }
+
+    public DailyLevelResponse createDailyLevel(LocalDate date) {
         log.info("createDailyLevel for date: {}", date);
         return dailyLevelCache.computeIfAbsent(date, this::generateNewDailyLevel);
     }
