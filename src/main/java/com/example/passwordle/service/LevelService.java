@@ -8,6 +8,8 @@ import com.example.passwordle.model.LevelResult;
 import com.example.passwordle.model.SkeletonLevel;
 import com.example.passwordle.dto.DailyLevelResultRequest;
 import com.example.passwordle.dto.DailyLevelMetadataResponse;
+import com.example.passwordle.dao.DailyLevelDao;
+import com.example.passwordle.model.DailyLevel;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
@@ -26,13 +28,15 @@ public class LevelService {
 
     private final ObjectMapper objectMapper;
     private final ResourceLoader resourceLoader;
+    private final DailyLevelDao dailyLevelDao;
     private final Map<Integer, SkeletonLevel> skeletonLevelCache = new ConcurrentHashMap<>();
     private final Map<LocalDate, DailyLevelResponse> dailyLevelCache = new ConcurrentHashMap<>();
     private final Map<LocalDate, LevelResult> levelResultCache = new ConcurrentHashMap<>();
 
-    public LevelService(ObjectMapper objectMapper, ResourceLoader resourceLoader) {
+    public LevelService(ObjectMapper objectMapper, ResourceLoader resourceLoader, DailyLevelDao dailyLevelDao) {
         this.objectMapper = objectMapper;
         this.resourceLoader = resourceLoader;
+        this.dailyLevelDao = dailyLevelDao;
     }
 
     private SkeletonLevel getSkeletonLevel(int levelNumber) {
@@ -65,13 +69,23 @@ public class LevelService {
         log.info("getDailyLevel called, today: {}, cache contains key: {}", today, dailyLevelCache.containsKey(today));
 
         DailyLevelResponse response = dailyLevelCache.get(today);
-        if (response == null) {
-            log.info("No daily level in cache for today ({}), creating one", today);
-            return createDailyLevel(today);
+        if (response != null) {
+            log.info("Returning cached daily level for today: {}, id: {}", today, response.getId());
+            return response;
         }
 
-        log.info("Returning cached daily level for today: {}, id: {}", today, response.getId());
-        return response;
+        log.info("No daily level in cache for today ({}), checking DynamoDB", today);
+        String dailyId = today.toString();
+        java.util.Optional<DailyLevel> dbLevelOpt = dailyLevelDao.getById(dailyId);
+        if (dbLevelOpt.isPresent()) {
+            log.info("Found daily level in DynamoDB for today ({})", today);
+            DailyLevelResponse dbResponse = new DailyLevelResponse(dbLevelOpt.get().getLevelId(), dbLevelOpt.get().getLevel());
+            dailyLevelCache.put(today, dbResponse);
+            return dbResponse;
+        }
+
+        log.info("No daily level in DynamoDB for today ({}), creating one", today);
+        return createDailyLevel(today);
     }
 
     public DailyLevelResponse createDailyLevel(DailyLevelRequest request) {
@@ -94,7 +108,16 @@ public class LevelService {
                 level.getPassword().length());
 
         // Use the date itself as the ID for the daily level response
-        String dailyId = date != null ? date.toString() : "unknown-date";
+        if (date == null) {
+            log.error("Date is null when generating daily level");
+            throw new IllegalStateException("Date cannot be null when generating a daily level");
+        }
+        String dailyId = date.toString();
+
+        // Save to DynamoDB first
+        DailyLevel newDailyLevel = new DailyLevel(dailyId, level);
+        log.info("Saving daily level to DynamoDB with id: {}", dailyId);
+        dailyLevelDao.save(newDailyLevel);
 
         levelResultCache.putIfAbsent(date, new LevelResult(dailyId, date));
         log.info("Created daily level with id: {}", dailyId);

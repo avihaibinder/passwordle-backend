@@ -6,11 +6,16 @@ com\example\passwordle\controller\DailyLevelController.class
 com\example\passwordle\model\LevelRow.class
 com\example\passwordle\controller\HealthStatus.class
 com\example\passwordle\model\LevelResult.class
+com\example\passwordle\converter\LevelConverter.class
+com\example\passwordle\config\DynamoDbConfig.class
 com\example\passwordle\controller\HealthController.class
 com\example\passwordle\PasswordleBackendApplication.class
 com\example\passwordle\dto\DailyLevelMetadataResponse.class
+com\example\passwordle\model\DailyLevel.class
 com\example\passwordle\dto\DailyLevelResponse.class
 com\example\passwordle\dto\DailyLevelResultRequest.class
+com\example\passwordle\filter\SecurityFilter.class
 com\example\passwordle\model\SkeletonLevel.class
 com\example\passwordle\dto\DailyLevelRequest.class
 com\example\passwordle\exception\LevelNotFoundException.class
+com\example\passwordle\dao\DailyLevelDao.class
