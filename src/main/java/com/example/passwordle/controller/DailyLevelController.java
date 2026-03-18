@@ -2,10 +2,12 @@ package com.example.passwordle.controller;
 
 import com.example.passwordle.dto.DailyLevelRequest;
 import com.example.passwordle.dto.DailyLevelResultRequest;
+import com.example.passwordle.exception.LevelNotFoundException;
 import com.example.passwordle.service.LevelService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -31,6 +33,9 @@ public class DailyLevelController {
             Object response = levelService.getDailyLevel();
             log.info("GET /daily-level SUCCESS, response: {}", response);
             return ResponseEntity.ok(response);
+        } catch (LevelNotFoundException e) {
+            log.warn("GET /daily-level NOT FOUND: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         } catch (Throwable t) {
             log.error("GET /daily-level ERROR: {}", t.getMessage(), t);
             return ResponseEntity.badRequest().body(t.getMessage());

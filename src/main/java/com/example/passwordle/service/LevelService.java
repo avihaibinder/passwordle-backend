@@ -79,13 +79,14 @@ public class LevelService {
         java.util.Optional<DailyLevel> dbLevelOpt = dailyLevelDao.getById(dailyId);
         if (dbLevelOpt.isPresent()) {
             log.info("Found daily level in DynamoDB for today ({})", today);
-            DailyLevelResponse dbResponse = new DailyLevelResponse(dbLevelOpt.get().getLevelId(), dbLevelOpt.get().getLevel());
+            DailyLevelResponse dbResponse = new DailyLevelResponse(dbLevelOpt.get().getLevelId(),
+                    dbLevelOpt.get().getLevel());
             dailyLevelCache.put(today, dbResponse);
             return dbResponse;
+        } else {
+            log.info("No daily level found for today ({})", today);
+            throw new LevelNotFoundException("Daily level not found for date: " + today);
         }
-
-        log.info("No daily level in DynamoDB for today ({}), creating one", today);
-        return createDailyLevel(today);
     }
 
     public DailyLevelResponse createDailyLevel(DailyLevelRequest request) {
