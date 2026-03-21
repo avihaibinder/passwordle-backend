@@ -38,7 +38,7 @@ public class DailyLevelController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         } catch (Throwable t) {
             log.error("GET /daily-level ERROR: {}", t.getMessage(), t);
-            return ResponseEntity.badRequest().body(t.getMessage());
+            return ResponseEntity.internalServerError().body(t.getMessage());
         }
     }
 
