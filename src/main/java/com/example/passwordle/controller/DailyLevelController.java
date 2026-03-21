@@ -51,7 +51,9 @@ public class DailyLevelController {
             return ResponseEntity.ok(response);
         } catch (Throwable t) {
             log.error("POST /daily-level ERROR: {}", t.getMessage(), t);
-            return ResponseEntity.badRequest().body(t.getMessage());
+            java.io.StringWriter sw = new java.io.StringWriter();
+            t.printStackTrace(new java.io.PrintWriter(sw));
+            return ResponseEntity.internalServerError().body(sw.toString());
         }
     }
 
