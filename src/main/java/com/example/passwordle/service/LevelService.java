@@ -19,8 +19,10 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
+import org.springframework.scheduling.annotation.Scheduled;
 
 @Slf4j
 @Service
@@ -76,7 +78,7 @@ public class LevelService {
 
         log.info("No daily level in cache for today ({}), checking DynamoDB", today);
         String dailyId = today.toString();
-        java.util.Optional<DailyLevel> dbLevelOpt = dailyLevelDao.getById(dailyId);
+        Optional<DailyLevel> dbLevelOpt = dailyLevelDao.getById(dailyId);
         if (dbLevelOpt.isPresent()) {
             log.info("Found daily level in DynamoDB for today ({})", today);
             DailyLevelResponse dbResponse = new DailyLevelResponse(dbLevelOpt.get().getLevelId(),
@@ -184,5 +186,21 @@ public class LevelService {
         LocalDate today = LocalDate.now();
         log.info("resolveDate: no date or id provided, defaulting to today: {}", today);
         return today;
+    }
+
+    /**
+     * Automatically generates a daily level for tomorrow.
+     * Runs every day at 10:00 PM (22:00) server time.
+     */
+    @Scheduled(cron = "0 0 22 * * ?")
+    public void autoGenerateTomorrowLevel() {
+        LocalDate tomorrow = LocalDate.now().plusDays(1);
+        log.info("Cron Job: Automatically generating daily level for tomorrow: {}", tomorrow);
+        try {
+            createDailyLevel(tomorrow);
+            log.info("Cron Job: Successfully generated level for {}", tomorrow);
+        } catch (Exception e) {
+            log.error("Cron Job: Failed to generate level for tomorrow: {}", e.getMessage(), e);
+        }
     }
 }

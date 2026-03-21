@@ -51,9 +51,7 @@ public class DailyLevelController {
             return ResponseEntity.ok(response);
         } catch (Throwable t) {
             log.error("POST /daily-level ERROR: {}", t.getMessage(), t);
-            java.io.StringWriter sw = new java.io.StringWriter();
-            t.printStackTrace(new java.io.PrintWriter(sw));
-            return ResponseEntity.internalServerError().body(sw.toString());
+            return ResponseEntity.internalServerError().body(t.getMessage());
         }
     }
 
@@ -69,7 +67,7 @@ public class DailyLevelController {
             return ResponseEntity.ok(response);
         } catch (Throwable t) {
             log.error("GET /daily-level/metadata ERROR: {}", t.getMessage(), t);
-            return ResponseEntity.badRequest().body(t.getMessage());
+            return ResponseEntity.internalServerError().body(t.getMessage());
         }
     }
 
@@ -82,7 +80,7 @@ public class DailyLevelController {
             return ResponseEntity.ok().build();
         } catch (Throwable t) {
             log.error("POST /daily-level/result ERROR: {}", t.getMessage(), t);
-            return ResponseEntity.badRequest().body(t.getMessage());
+            return ResponseEntity.internalServerError().body(t.getMessage());
         }
     }
 }
