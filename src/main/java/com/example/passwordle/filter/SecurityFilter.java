@@ -33,11 +33,12 @@ public class SecurityFilter extends OncePerRequestFilter {
         String appHeader = request.getHeader("X-App-API-Key");
 
         if (gatewayHeader == null || !gatewayHeader.equals(gatewaySecret) ||
-            appHeader == null || !appHeader.equals(appApiKey)) {
-            
+                appHeader == null || !appHeader.equals(appApiKey)) {
+
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json");
-            response.getWriter().write("{\"error\": \"Unauthorized\", \"message\": \"Invalid or missing security headers\"}");
+            response.getWriter()
+                    .write("{\"error\": \"Unauthorized\", \"message\": \"Invalid or missing security headers\"}");
             return;
         }
 
