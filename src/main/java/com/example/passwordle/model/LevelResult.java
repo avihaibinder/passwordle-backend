@@ -31,15 +31,11 @@ public class LevelResult {
     public float getSuccessPercentage() {
         int success = successCounter.get();
         int fail = failCounter.get();
-        float ratio;
-        if (fail == 0) {
-            if (success == 0) {
-                return 0.0f;
-            }
-            ratio = 100.0f;
-        } else {
-            ratio = (float) success / fail * 100;
+        int total = success + fail;
+        if (total == 0) {
+            return 0.0f;
         }
-        return (float) Math.round(ratio * 10) / 10;
+        float percentage = (float) success / total * 100;
+        return (float) Math.round(percentage * 10) / 10.0f;
     }
 }
