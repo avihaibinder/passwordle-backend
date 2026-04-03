@@ -103,7 +103,7 @@ public class LevelService {
     }
 
     private DailyLevelResponse generateNewDailyLevel(LocalDate date) {
-        int randomSkeletonId = ThreadLocalRandom.current().nextInt(50);
+        int randomSkeletonId = ThreadLocalRandom.current().nextInt(10, 49);
         log.info("Generating new daily level for date: {}, using skeleton id: {}", date, randomSkeletonId);
 
         SkeletonLevel skeletonLevel = getSkeletonLevel(randomSkeletonId);
