@@ -32,8 +32,8 @@ public class LevelService {
     private final ResourceLoader resourceLoader;
     private final DailyLevelDao dailyLevelDao;
     private final Map<Integer, SkeletonLevel> skeletonLevelCache = new ConcurrentHashMap<>();
-    private final Map<LocalDate, DailyLevelResponse> dailyLevelCache = new ConcurrentHashMap<>();
-    private final Map<LocalDate, LevelResult> levelResultCache = new ConcurrentHashMap<>();
+    private final Map<String, DailyLevelResponse> dailyLevelCache = new ConcurrentHashMap<>();
+    private final Map<String, LevelResult> levelResultCache = new ConcurrentHashMap<>();
 
     public LevelService(ObjectMapper objectMapper, ResourceLoader resourceLoader, DailyLevelDao dailyLevelDao) {
         this.objectMapper = objectMapper;
@@ -68,22 +68,22 @@ public class LevelService {
 
     public DailyLevelResponse getDailyLevel() {
         LocalDate today = LocalDate.now();
-        log.info("getDailyLevel called, today: {}, cache contains key: {}", today, dailyLevelCache.containsKey(today));
+        String dailyId = today.toString();
+        log.info("getDailyLevel called, today: {}, cache contains key: {}", today, dailyLevelCache.containsKey(dailyId));
 
-        DailyLevelResponse response = dailyLevelCache.get(today);
+        DailyLevelResponse response = dailyLevelCache.get(dailyId);
         if (response != null) {
             log.info("Returning cached daily level for today: {}, id: {}", today, response.getId());
             return response;
         }
 
         log.info("No daily level in cache for today ({}), checking DynamoDB", today);
-        String dailyId = today.toString();
         Optional<DailyLevel> dbLevelOpt = dailyLevelDao.getById(dailyId);
         if (dbLevelOpt.isPresent()) {
             log.info("Found daily level in DynamoDB for today ({})", today);
             DailyLevelResponse dbResponse = new DailyLevelResponse(dbLevelOpt.get().getLevelId(),
                     dbLevelOpt.get().getLevel());
-            dailyLevelCache.put(today, dbResponse);
+            dailyLevelCache.put(dailyId, dbResponse);
             return dbResponse;
         } else {
             log.info("No daily level found for today ({})", today);
@@ -98,7 +98,8 @@ public class LevelService {
 
     public DailyLevelResponse createDailyLevel(LocalDate date) {
         log.info("createDailyLevel for date: {}", date);
-        return dailyLevelCache.computeIfAbsent(date, this::generateNewDailyLevel);
+        String dailyId = date.toString();
+        return dailyLevelCache.computeIfAbsent(dailyId, k -> generateNewDailyLevel(date));
     }
 
     private DailyLevelResponse generateNewDailyLevel(LocalDate date) {
@@ -122,7 +123,7 @@ public class LevelService {
         log.info("Saving daily level to DynamoDB with id: {}", dailyId);
         dailyLevelDao.save(newDailyLevel);
 
-        levelResultCache.putIfAbsent(date, new LevelResult(dailyId, date));
+        levelResultCache.putIfAbsent(dailyId, new LevelResult(dailyId, date));
         log.info("Created daily level with id: {}", dailyId);
 
         return new DailyLevelResponse(dailyId, level);
@@ -134,9 +135,26 @@ public class LevelService {
         log.info("Result field type: {}, value: '{}'",
                 request.getResult() != null ? request.getResult().getClass().getName() : "null", request.getResult());
 
-        LevelResult levelResult = levelResultCache.get(request.getDate());
+        String dailyId;
+        LocalDate date = request.getDate();
+        if (date != null) {
+            dailyId = date.toString();
+        } else if (request.getId() != null) {
+            dailyId = request.getId();
+            try {
+                date = LocalDate.parse(dailyId);
+            } catch (Exception e) {
+                log.warn("Failed to parse date from id: {}, defaulting to today", dailyId);
+                date = LocalDate.now();
+            }
+        } else {
+            date = LocalDate.now();
+            dailyId = date.toString();
+        }
+
+        LevelResult levelResult = levelResultCache.get(dailyId);
         if (levelResult != null) {
-            log.info("Found existing LevelResult for date: {}", request.getDate());
+            log.info("Found existing LevelResult for id: {}", dailyId);
             if ("success".equalsIgnoreCase(request.getResult())) {
                 levelResult.incrementSuccess();
                 log.info("Incremented success counter");
@@ -147,22 +165,23 @@ public class LevelService {
                 log.warn("Unknown result value: '{}'", request.getResult());
             }
         } else {
-            log.info("No existing LevelResult for date: {}, creating new one", request.getDate());
-            LevelResult newRes = new LevelResult(request.getId(), request.getDate());
+            log.info("No existing LevelResult for id: {}, creating new one", dailyId);
+            LevelResult newRes = new LevelResult(dailyId, date);
             if ("success".equalsIgnoreCase(request.getResult())) {
                 newRes.incrementSuccess();
             } else if ("failure".equalsIgnoreCase(request.getResult())) {
                 newRes.incrementFailure();
             }
-            levelResultCache.put(request.getDate(), newRes);
+            levelResultCache.put(dailyId, newRes);
         }
         log.info("levelResultCache size: {}", levelResultCache.size());
     }
 
     public DailyLevelMetadataResponse getDailyLevelMetadata(DailyLevelRequest request) {
         LocalDate date = resolveDate(request);
+        String dailyId = date.toString();
         log.info("getDailyLevelMetadata for date: {}", date);
-        LevelResult levelResult = levelResultCache.getOrDefault(date, new LevelResult());
+        LevelResult levelResult = levelResultCache.getOrDefault(dailyId, new LevelResult(dailyId, date));
         float pct = levelResult.getSuccessPercentage();
         log.info("Returning metadata: id={}, date={}, successPercentage={}", levelResult.getId(), levelResult.getDate(),
                 pct);
