@@ -2,9 +2,31 @@
   "data": [
     {
       "numbers": [
-        "E",
         "A",
+        "B",
         "C"
+      ],
+      "indicator": {
+        "correct_in_place": 0,
+        "correct_not_in_place": 0
+      }
+    },
+    {
+      "numbers": [
+        "D",
+        "E",
+        "C"
+      ],
+      "indicator": {
+        "correct_in_place": 0,
+        "correct_not_in_place": 2
+      }
+    },
+    {
+      "numbers": [
+        "F",
+        "A",
+        "D"
       ],
       "indicator": {
         "correct_in_place": 1,
@@ -13,42 +35,20 @@
     },
     {
       "numbers": [
-        "H",
-        "E",
-        "F"
-      ],
-      "indicator": {
-        "correct_in_place": 2,
-        "correct_not_in_place": 0
-      }
-    },
-    {
-      "numbers": [
+        "F",
         "G",
-        "B",
         "H"
       ],
       "indicator": {
         "correct_in_place": 0,
         "correct_not_in_place": 1
       }
-    },
-    {
-      "numbers": [
-        "G",
-        "D",
-        "C"
-      ],
-      "indicator": {
-        "correct_in_place": 0,
-        "correct_not_in_place": 0
-      }
     }
   ],
   "password": [
+    "E",
     "H",
-    "A",
-    "F"
+    "D"
   ],
   "numbers_each_row": 3
 }

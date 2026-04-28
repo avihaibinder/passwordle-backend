@@ -2,8 +2,33 @@
   "data": [
     {
       "numbers": [
-        "D",
-        "J",
+        "A",
+        "B",
+        "C",
+        "D"
+      ],
+      "indicator": {
+        "correct_in_place": 2,
+        "correct_not_in_place": 0
+      }
+    },
+    {
+      "numbers": [
+        "E",
+        "F",
+        "G",
+        "B"
+      ],
+      "indicator": {
+        "correct_in_place": 0,
+        "correct_not_in_place": 0
+      }
+    },
+    {
+      "numbers": [
+        "A",
+        "H",
+        "F",
         "E"
       ],
       "indicator": {
@@ -13,42 +38,22 @@
     },
     {
       "numbers": [
-        "G",
-        "H",
-        "D"
+        "D",
+        "F",
+        "I",
+        "B"
       ],
       "indicator": {
         "correct_in_place": 0,
-        "correct_not_in_place": 1
-      }
-    },
-    {
-      "numbers": [
-        "J",
-        "A",
-        "G"
-      ],
-      "indicator": {
-        "correct_in_place": 1,
-        "correct_not_in_place": 1
-      }
-    },
-    {
-      "numbers": [
-        "B",
-        "I",
-        "F"
-      ],
-      "indicator": {
-        "correct_in_place": 1,
-        "correct_not_in_place": 0
+        "correct_not_in_place": 2
       }
     }
   ],
   "password": [
-    "J",
-    "G",
-    "F"
+    "H",
+    "I",
+    "C",
+    "D"
   ],
-  "numbers_each_row": 3
+  "numbers_each_row": 4
 }
