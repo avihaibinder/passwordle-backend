@@ -8,8 +8,11 @@ import com.example.passwordle.model.LevelResult;
 import com.example.passwordle.model.SkeletonLevel;
 import com.example.passwordle.dto.DailyLevelResultRequest;
 import com.example.passwordle.dto.DailyLevelMetadataResponse;
+import com.example.passwordle.dto.DailyLevelReportEntry;
 import com.example.passwordle.dao.DailyLevelDao;
+import com.example.passwordle.dao.DailyLevelResultDao;
 import com.example.passwordle.model.DailyLevel;
+import com.example.passwordle.model.DailyLevelResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
@@ -18,8 +21,13 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.util.Comparator;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -31,14 +39,16 @@ public class LevelService {
     private final ObjectMapper objectMapper;
     private final ResourceLoader resourceLoader;
     private final DailyLevelDao dailyLevelDao;
+    private final DailyLevelResultDao dailyLevelResultDao;
     private final Map<Integer, SkeletonLevel> skeletonLevelCache = new ConcurrentHashMap<>();
     private final Map<String, DailyLevelResponse> dailyLevelCache = new ConcurrentHashMap<>();
     private final Map<String, LevelResult> levelResultCache = new ConcurrentHashMap<>();
 
-    public LevelService(ObjectMapper objectMapper, ResourceLoader resourceLoader, DailyLevelDao dailyLevelDao) {
+    public LevelService(ObjectMapper objectMapper, ResourceLoader resourceLoader, DailyLevelDao dailyLevelDao, DailyLevelResultDao dailyLevelResultDao) {
         this.objectMapper = objectMapper;
         this.resourceLoader = resourceLoader;
         this.dailyLevelDao = dailyLevelDao;
+        this.dailyLevelResultDao = dailyLevelResultDao;
     }
 
     private SkeletonLevel getSkeletonLevel(int levelNumber) {
@@ -188,6 +198,49 @@ public class LevelService {
         return new DailyLevelMetadataResponse(levelResult.getId(), levelResult.getDate(), pct);
     }
 
+    public List<DailyLevelReportEntry> getDailyLevelReport() {
+        log.info("getDailyLevelReport called, levelResultCache size: {}", levelResultCache.size());
+
+        // Use a map keyed by dateId to merge persisted + in-memory, in-memory wins
+        Map<String, DailyLevelReportEntry> merged = new LinkedHashMap<>();
+
+        // 1. Load all persisted results from DynamoDB
+        try {
+            List<DailyLevelResult> persisted = dailyLevelResultDao.getAll();
+            log.info("Loaded {} persisted results from DynamoDB", persisted.size());
+            for (DailyLevelResult pr : persisted) {
+                LocalDate date = null;
+                try {
+                    date = LocalDate.parse(pr.getDateId());
+                } catch (Exception e) {
+                    log.warn("Failed to parse dateId '{}' as LocalDate", pr.getDateId());
+                }
+                merged.put(pr.getDateId(), new DailyLevelReportEntry(
+                        pr.getDateId(), date,
+                        pr.getTotalPlayed(), pr.getTotalSucceeded(),
+                        pr.getTotalFailed(), pr.getSuccessPercentage()));
+            }
+        } catch (Exception e) {
+            log.warn("Failed to load persisted results from DynamoDB: {}", e.getMessage());
+        }
+
+        // 2. Overlay in-memory results (current/active data takes precedence)
+        for (LevelResult lr : levelResultCache.values()) {
+            int succeeded = lr.getSuccessCounter().get();
+            int failed = lr.getFailCounter().get();
+            int totalPlayed = succeeded + failed;
+            merged.put(lr.getId(), new DailyLevelReportEntry(
+                    lr.getId(), lr.getDate(),
+                    totalPlayed, succeeded, failed,
+                    lr.getSuccessPercentage()));
+        }
+
+        return merged.values().stream()
+                .sorted(Comparator.comparing(DailyLevelReportEntry::getDate,
+                        Comparator.nullsLast(Comparator.naturalOrder())))
+                .collect(Collectors.toList());
+    }
+
     private LocalDate resolveDate(DailyLevelRequest request) {
         if (request.getDate() != null) {
             log.info("resolveDate: using request.date={}", request.getDate());
@@ -220,6 +273,44 @@ public class LevelService {
             log.info("Cron Job: Successfully generated level for {}", tomorrow);
         } catch (Exception e) {
             log.error("Cron Job: Failed to generate level for tomorrow: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Persists yesterday's daily level results to DynamoDB.
+     * Runs every day at 6:00 AM server time.
+     * After persisting, the entry is removed from the in-memory cache.
+     */
+    @Scheduled(cron = "0 0 6 * * ?")
+    public void persistYesterdayResults() {
+        LocalDate yesterday = LocalDate.now().minusDays(1);
+        String yesterdayId = yesterday.toString();
+        log.info("Cron Job: Persisting results for yesterday: {}", yesterdayId);
+
+        LevelResult levelResult = levelResultCache.get(yesterdayId);
+        if (levelResult == null) {
+            log.info("Cron Job: No in-memory results found for {}, nothing to persist", yesterdayId);
+            return;
+        }
+
+        int succeeded = levelResult.getSuccessCounter().get();
+        int failed = levelResult.getFailCounter().get();
+        int totalPlayed = succeeded + failed;
+        float successPercentage = levelResult.getSuccessPercentage();
+
+        DailyLevelResult dbResult = new DailyLevelResult(
+                yesterdayId, totalPlayed, succeeded, failed, successPercentage);
+
+        try {
+            dailyLevelResultDao.save(dbResult);
+            log.info("Cron Job: Persisted results for {} — played: {}, succeeded: {}, failed: {}, success%: {}",
+                    yesterdayId, totalPlayed, succeeded, failed, successPercentage);
+
+            // Remove from in-memory cache after successful persistence
+            levelResultCache.remove(yesterdayId);
+            log.info("Cron Job: Removed {} from in-memory cache", yesterdayId);
+        } catch (Exception e) {
+            log.error("Cron Job: Failed to persist results for {}: {}", yesterdayId, e.getMessage(), e);
         }
     }
 }

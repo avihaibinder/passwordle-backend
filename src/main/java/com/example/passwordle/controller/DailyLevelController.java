@@ -83,4 +83,17 @@ public class DailyLevelController {
             return ResponseEntity.internalServerError().body(t.getMessage());
         }
     }
+
+    @GetMapping("/report")
+    public ResponseEntity<?> getDailyLevelReport() {
+        log.info("=== GET /daily-level/report ===");
+        try {
+            Object response = levelService.getDailyLevelReport();
+            log.info("GET /daily-level/report SUCCESS");
+            return ResponseEntity.ok(response);
+        } catch (Throwable t) {
+            log.error("GET /daily-level/report ERROR: {}", t.getMessage(), t);
+            return ResponseEntity.internalServerError().body(t.getMessage());
+        }
+    }
 }
