@@ -22,7 +22,6 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.Comparator;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -162,27 +161,21 @@ public class LevelService {
             dailyId = date.toString();
         }
 
-        LevelResult levelResult = levelResultCache.get(dailyId);
-        if (levelResult != null) {
-            log.info("Found existing LevelResult for id: {}", dailyId);
-            if ("success".equalsIgnoreCase(request.getResult())) {
-                levelResult.incrementSuccess();
-                log.info("Incremented success counter");
-            } else if ("failure".equalsIgnoreCase(request.getResult())) {
-                levelResult.incrementFailure();
-                log.info("Incremented failure counter");
-            } else {
-                log.warn("Unknown result value: '{}'", request.getResult());
-            }
+        final LocalDate resolvedDate = date;
+        LevelResult levelResult = levelResultCache.computeIfAbsent(dailyId,
+                k -> {
+                    log.info("Creating new LevelResult for id: {}", k);
+                    return new LevelResult(k, resolvedDate);
+                });
+
+        if ("success".equalsIgnoreCase(request.getResult())) {
+            levelResult.incrementSuccess();
+            log.info("Incremented success counter for id: {}", dailyId);
+        } else if ("failure".equalsIgnoreCase(request.getResult())) {
+            levelResult.incrementFailure();
+            log.info("Incremented failure counter for id: {}", dailyId);
         } else {
-            log.info("No existing LevelResult for id: {}, creating new one", dailyId);
-            LevelResult newRes = new LevelResult(dailyId, date);
-            if ("success".equalsIgnoreCase(request.getResult())) {
-                newRes.incrementSuccess();
-            } else if ("failure".equalsIgnoreCase(request.getResult())) {
-                newRes.incrementFailure();
-            }
-            levelResultCache.put(dailyId, newRes);
+            log.warn("Unknown result value: '{}'", request.getResult());
         }
         log.info("levelResultCache size: {}", levelResultCache.size());
     }
